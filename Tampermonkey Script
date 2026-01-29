@@ -1,0 +1,92 @@
+// ==UserScript==
+// @name           Bot Exemplo
+// @namespace      http://tampermonkey.net/
+// @version        2.9
+// @description    N/A
+// @author         Gabriel Holtz
+// @match          https://www.chess.com/play/computer*
+// @match          https://www.chess.com/pt-BR/play/computer*
+// @grant          none
+// @run-at         document-start
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    const CONFIG = {
+        nome: "Bot Exemplo",
+        rating: "(???)",
+        avatarUrl: "",
+        classeBandeira: "country-us"
+    };
+
+    const MAPA_FALAS = {
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": ""
+    };
+
+    function processar() {
+        // 1. Localizar o container do topo (sempre o bot no computador)
+        const topPlayer = document.querySelector('.board-layout-top, .board-layout-player.user-tagline-top');
+
+        if (topPlayer) {
+            // Nome
+            const n = topPlayer.querySelector('[data-test-element="user-tagline-username"], .cc-user-username-component');
+            if (n && n.innerText !== CONFIG.nome) n.innerText = CONFIG.nome;
+
+            // Rating
+            const r = topPlayer.querySelector('[data-cy="user-tagline-rating"], .cc-user-rating-white');
+            if (r && r.innerText !== CONFIG.rating) r.innerText = CONFIG.rating;
+
+            // Bandeira
+            const b = topPlayer.querySelector('.country-flags-component');
+            if (b && !b.classList.contains(CONFIG.classeBandeira)) {
+                b.className = `country-flags-component ${CONFIG.classeBandeira} country-flags-small`;
+            }
+
+            // Avatar do Tabuleiro
+            const a = topPlayer.querySelector('img[data-cy="avatar"], .cc-user-avatar-component');
+            if (a && a.src !== CONFIG.avatarUrl) {
+                a.src = CONFIG.avatarUrl;
+                a.srcset = CONFIG.avatarUrl;
+            }
+        }
+
+        // 2. Avatar do Balão de Fala (aquele que você mandou o HTML)
+        const avatarBalao = document.querySelector('img[data-cy="bot-avatar-img"]');
+        if (avatarBalao && avatarBalao.src !== CONFIG.avatarUrl) {
+            avatarBalao.src = CONFIG.avatarUrl;
+            avatarBalao.srcset = CONFIG.avatarUrl;
+        }
+
+        // 3. Falas
+        document.querySelectorAll('.bot-speech-content-content-container, [data-cy="bot-speech-content-message"]').forEach(el => {
+            const falaDoSite = el.innerText.toLowerCase();
+
+            for (const [chave, nova] of Object.entries(MAPA_FALAS)) {
+                // Compara a fala do site (minúsculo) com a chave (convertida para minúsculo na hora)
+                if (falaDoSite.includes(chave.toLowerCase()) && el.innerText !== nova) {
+                    el.innerText = nova;
+                }
+            }
+        });
+    }
+
+    // Executa sem parar para vencer o "refresh" do React (tecnologia do site)
+    const timer = setInterval(processar, 100);
+
+    // Tenta executar ao carregar também
+    window.addEventListener('load', processar);
+})();
